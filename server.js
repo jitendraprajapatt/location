@@ -13,22 +13,27 @@ app.post("/location", async (req, res) => {
     return res.status(400).send("Location missing");
   }
 
-  const transporter = nodemailer.createTransport({
-    service: "gmail",
-    auth: {
-      user: process.env.EMAIL_USER,
-      pass: process.env.EMAIL_PASS
-    }
-  });
+  try {
+    const transporter = nodemailer.createTransport({
+      service: "gmail",
+      auth: {
+        user: process.env.EMAIL_USER, // ✅ match your env
+        pass: process.env.EMAIL_PASS
+      }
+    });
 
-  await transporter.sendMail({
-    from: process.env.EMAIL_USERR,
-    to: "jitendraprajapat.official@gmail.com",
-    subject: "New Location Received",
-    text: `Latitude: ${latitude}\nLongitude: ${longitude}`
-  });
+    await transporter.sendMail({
+      from: process.env.EMAIL_USER, // ✅ corrected
+      to: "jitendraprajapat.official@gmail.com",
+      subject: "New Location Received",
+      text: `Latitude: ${latitude}\nLongitude: ${longitude}`
+    });
 
-  res.send("OK");
+    res.send("OK");
+  } catch (err) {
+    console.error(err);
+    res.status(500).send("Server error");
+  }
 });
 
 const PORT = process.env.PORT || 3000;
