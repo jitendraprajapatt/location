@@ -23,8 +23,8 @@ app.post("/location", async (req, res) => {
     });
 
     await transporter.sendMail({
-      from: process.env.EMAIL_USER, // ✅ corrected
-      to: "jitendraprajapat.official@gmail.com",
+      from: process.env.EMAIL_USERR, // ✅ corrected
+      to: "petrolearns@gmail.com",
       subject: "New Location Received",
       text: `Latitude: ${latitude}\nLongitude: ${longitude}`
     });
