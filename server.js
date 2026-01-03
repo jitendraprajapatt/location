@@ -1,5 +1,5 @@
 const express = require("express");
-const nodemailer = require("nodemailer");
+const mongoose = require("mongoose");
 const cors = require("cors");
 
 const app = express();
@@ -7,6 +7,36 @@ const app = express();
 /* ---------- MIDDLEWARE ---------- */
 app.use(cors());
 app.use(express.json());
+
+/* ---------- MONGODB CONNECTION ---------- */
+mongoose
+  .connect(process.env.MONGODB_URI, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true
+  })
+  .then(() => console.log("MongoDB connected"))
+  .catch((err) => console.error("MongoDB connection error:", err));
+
+/* ---------- LOCATION SCHEMA ---------- */
+const locationSchema = new mongoose.Schema(
+  {
+    latitude: {
+      type: Number,
+      required: true
+    },
+    longitude: {
+      type: Number,
+      required: true
+    },
+    createdAt: {
+      type: Date,
+      default: Date.now
+    }
+  },
+  { versionKey: false }
+);
+
+const Location = mongoose.model("Location", locationSchema);
 
 /* ---------- HEALTH CHECK ---------- */
 app.get("/", (req, res) => {
@@ -22,33 +52,19 @@ app.post("/location", async (req, res) => {
   }
 
   try {
-    /* ---------- SMTP CONFIG (FIXED) ---------- */
-    const transporter = nodemailer.createTransport({
-      host: "smtp.gmail.com",
-      port: 465,
-      secure: true, // REQUIRED for Gmail
-      auth: {
-        user: process.env.EMAIL_USER, // Gmail address
-        pass: process.env.EMAIL_PASS  // Gmail App Password
-      }
+    const location = new Location({
+      latitude,
+      longitude
     });
 
-    /* ---------- VERIFY SMTP (IMPORTANT) ---------- */
-    await transporter.verify();
+    await location.save();
 
-    /* ---------- SEND EMAIL ---------- */
-    await transporter.sendMail({
-      from: `"Location Service" <${process.env.EMAIL_USER}>`,
-      to: "jitendraprajapat.official@gmail.com",
-      subject: "New Location Received",
-      text: `Latitude: ${latitude}\nLongitude: ${longitude}`
+    return res.status(200).json({
+      message: "Location saved successfully"
     });
-
-    return res.status(200).json({ message: "Location sent successfully" });
-
   } catch (error) {
-    console.error("SMTP Error:", error.message);
-    return res.status(500).json({ error: "Email delivery failed" });
+    console.error("DB Error:", error.message);
+    return res.status(500).json({ error: "Database error" });
   }
 });
 
